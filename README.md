@@ -1,2 +1,2 @@
 # tpc
-Talkativve Power Conversion
+Talkative Power Conversion
