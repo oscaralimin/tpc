@@ -3,7 +3,7 @@ clear all
 close all
 
 v1 = 10;        % Volt
-duty = 0.75;    
+duty = 0.25;    
 len = 8;
 T = 1e-6;       % sekunde
 J = 1000;
@@ -20,7 +20,7 @@ input_raw = round(rand(1, len));
 ref_signal = zeros(1,J*len);
 % duty cycle = percentage of uptime
 for i = 1:len
-    ref_signal(J*i-(J/2)-(duty*J/2):J*i-(J/2)+(duty*J/2)) = 1;
+    ref_signal(samp_freq*i-(samp_freq/2)-(duty*samp_freq/2):samp_freq*i-(samp_freq/2)+(duty*samp_freq/2)) = 1;
 end
 
 figure();
@@ -39,15 +39,15 @@ figure();
 stem(input_raw);
 
 % Calculate output
-i_l = zeros(1, len*J);
-v2 = zeros(1, len*J);
+i_l = zeros(1, len*samp_freq);
+v2 = zeros(1, len*samp_freq);
 v2(1) = duty*v1;
 i_l(1) = v2(1)/res;
 
 tsl = 1/(samp_freq*ind);
 tsc = 1/(samp_freq*cap);
 
-for i = 2:J*len
+for i = 2:samp_freq*len
     i_l(i) = i_l(i-1) - tsl*v2(i-1) + fsk_signal(i)*tsl*v1;
     v2(i) = v2(i-1) + tsc*i_l(i) - tsc/res*v2(i-1);
 end
@@ -57,7 +57,6 @@ plot(v2);
 
 
 function f = generateFSK(dutycycle, sfreq, bin)
-   sfreq = fix(sfreq);
    sig = zeros(1,sfreq);
    if bin == 0
        sig((sfreq/2)-(dutycycle*sfreq/2):(sfreq/2)+(dutycycle*sfreq/2)) = 1;
