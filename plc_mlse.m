@@ -10,7 +10,7 @@ flag_mod = 2;           % Flag for modulation scheme
                         % 2: PSK
                         % 3: FSK
 
-flag_lc = 0;            % Flag for line encoding
+flag_lc = 1;            % Flag for line encoding
                         % 0: No line coding
                         % 1: Manchester coding
 
@@ -91,7 +91,7 @@ sx = v2_apx;
 %% Channel
 % add AWGN + modeling error (?)
 p = sum(sx.^2)/(len*sample_size);
-snr = 8;            % dB
+snr = 10;            % dB
 snr_lim = 10^(snr/10);
 const = sqrt(p)/sqrt(snr_lim);
 noise = const*randn(1, len*sample_size);
