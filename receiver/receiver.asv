@@ -13,15 +13,15 @@ function seq = receiver(rx)
 
         if flag_lc == 1
             temp = [];
-            for i = 1:length(input_raw)
-                if input_raw(i) == 0
+            for i = 1:length(input_raw_rx)
+                if input_raw_rx(i) == 0
                     temp = [temp 0 1];
                 else
                     temp = [temp 1 0];
                 end
             end
-            input_raw = temp;
-            len = length(input_raw);
+            input_raw_rx = temp;
+            len = length(input_raw_rx);
         end
     end
 end
