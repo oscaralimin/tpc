@@ -91,7 +91,7 @@ sx = v2_apx;
 %% Channel
 % add AWGN + modeling error (?)
 p = sum(sx.^2)/(len*sample_size);
-snr = 10;            % dB
+snr = 20;            % dB
 snr_lim = 10^(snr/10);
 const = sqrt(p)/sqrt(snr_lim);
 noise = const*randn(1, len*sample_size);
@@ -101,9 +101,15 @@ sx = sx + noise;
 % Predict with MLSE
 
 rx = sx;
-err = zeros(1, 2^len - 1);
 
-lengthx = len;
+if flag_lc == 1
+    lengthx = len/2;
+else
+    lengthx = len;
+end
+
+err = zeros(1, 2^lengthx - 1);
+
 for x = 0:2^lengthx - 1
 %     input_raw = round(rand(1, len));
     input_raw_rx = (int2bit(x,lengthx))';
@@ -157,7 +163,7 @@ for x = 0:2^lengthx - 1
 end
 
 [m, index] = min(err);
-recv_seq = int2bit(index-1, len)';
+recv_seq = int2bit(index-1, lengthx)';
 
 figure();
 subplot(2,1,1)

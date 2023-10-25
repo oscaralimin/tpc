@@ -1,70 +1,29 @@
-clc
-clear all
-close all
-
-%% Parameters
-
-flag_mod = 1;           % Flag for modulation scheme
-                        % 0: Unmodulated
-                        % 1: PWM
-                        % 2: PSK
-                        % 3: FSK
-
-flag_lc = 0;            % Flag for line encoding
-                        % 0: No line coding
-                        % 1: Manchester coding
-
-v1 = 10;        % Volt
-duty = 0.75;    
-len = 8;
-T = 1e-6;      
-sample_size = 1000;
-samp_freq = sample_size/T;      % Hz
-var = 0.2;      % PWM (duty1+duty2)/2 = duty       duty2 - duty1 = var
-
-ind = 1e-5;     % H
-cap = 1e-6;     % F
-res = 10;       % Ohm
-
-% create reference signal
-ref_signal = zeros(1,sample_size*len);
-% duty cycle = percentage of uptime
-for i = 1:len
-    ref_signal(sample_size*i-(sample_size/2)-(duty*sample_size/2):sample_size*i-(sample_size/2)+(duty*sample_size/2)) = 1;
-end
-
-%% Sender
-
-f = figure("Name","V2 Output");
-% data sequence
-lengthx = len;
-for x = 0:2^lengthx - 1
-%     input_raw = round(rand(1, len));
-    input_raw = (int2bit(x,lengthx))';
-%     input_raw = ref_signal;
-
-    % for line encoding
+function [v2_apx, v2, i_l_apx, i_l] = sender(len, flag_lc, sample_size, flag_mod, duty, var, v1, cap, ind, res, samp_freq)
+    input_raw = round(rand(1, len));
+    
     if flag_lc == 1
-        temp = [];
+        temp = zeros(1, length(input_raw)*2);
         for i = 1:length(input_raw)
             if input_raw(i) == 0
-                temp = [temp 0 1];
+                temp(2*i - 1) = 0;
+                temp(2*i) = 1;
             else
-                temp = [temp 1 0];
+                temp(2*i - 1) = 1;
+                temp(2*i) = 0;
             end
         end
         input_raw = temp;
         len = length(input_raw);
     end
-    
+
     signal = [];
     if flag_mod == 0
-        % For unmodulated
-        for i = 1:len
-            for j = 1:sample_size
-                signal = [signal input_raw(i)];
-            end
+    % For unmodulated
+    for i = 1:len
+        for j = 1:sample_size
+            signal = [signal input_raw(i)];
         end
+    end
 
     elseif flag_mod == 1
         % For PWM
@@ -83,32 +42,12 @@ for x = 0:2^lengthx - 1
         for i = 1:len
             signal = [signal generateFSK(duty, sample_size, input_raw(i))];
         end
-    end 
+    end
 
     [v2_apx, v2, i_l_apx, i_l] = buckConverter(signal, duty, len, sample_size, samp_freq, v1, cap, ind, res);
-    
-    figure(f);
-    subplot(2,1,1);
-    plot(v2_apx);
-    title("w/ appx");
-    hold on
-
-    subplot(2,1,2);
-    plot(v2)
-    title("w/o appx")
-    hold on
-    pause(.1)
 end
 
-%% Channel
-% add AWGN + modeling error (?)
-                   
-
-%% Receiver
-% Predict with MLSE
-
-
-%% Modulation Functions
+%% Modulation functions
 function f = generateFSK(dutycycle, sfreq, bin)
    sfreq = fix(sfreq);
    sig = zeros(1,sfreq);
@@ -166,7 +105,7 @@ function f = generatePWM(dutycycle, sfreq, bin, var)
     f = sig;
 end
 
-%% Buck Converter
+%% Buck converter
 function [x, y, i, j] = buckConverter(signal, duty, len, sample_size, samp_freq, v1, cap, ind, res)
     % Output for approximation
     i_l_apx = zeros(1, len*sample_size);

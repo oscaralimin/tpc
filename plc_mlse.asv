@@ -4,18 +4,18 @@ close all
 
 %% Parameters
 
-flag_mod = 1;           % Flag for modulation scheme
+flag_mod = 2;           % Flag for modulation scheme
                         % 0: Unmodulated
                         % 1: PWM
                         % 2: PSK
                         % 3: FSK
 
-flag_lc = 0;            % Flag for line encoding
+flag_lc = 1;            % Flag for line encoding
                         % 0: No line coding
                         % 1: Manchester coding
 
 v1 = 10;        % Volt
-duty = 0.75;    
+duty = 0.5;    
 len = 8;
 T = 1e-6;      
 sample_size = 1000;
@@ -35,26 +35,93 @@ end
 
 %% Sender
 
-f = figure("Name","V2 Output");
+% f = figure("Name","V2 Output");
 % data sequence
 lengthx = len;
+input_raw = round(rand(1, len));
+% input_raw = (int2bit(x,lengthx))';
+
+% for line encoding
+if flag_lc == 1
+    temp = [];
+    for i = 1:length(input_raw)
+        if input_raw(i) == 0
+            temp = [temp 0 1];
+        else
+            temp = [temp 1 0];
+        end
+    end
+    input_raw = temp;
+    len = length(input_raw);
+end
+
+signal = [];
+if flag_mod == 0
+    % For unmodulated
+    for i = 1:len
+        for j = 1:sample_size
+            signal = [signal input_raw(i)];
+        end
+    end
+
+elseif flag_mod == 1
+    % For PWM
+    for i = 1:len
+        signal = [signal generatePWM(duty, sample_size, input_raw(i), var)];
+    end
+
+elseif flag_mod == 2
+    % For PSK
+    for i = 1:len
+        signal = [signal generatePSK(duty, sample_size,input_raw(i))];
+    end
+
+elseif flag_mod == 3
+    % For FSK
+    for i = 1:len
+        signal = [signal generateFSK(duty, sample_size, input_raw(i))];
+    end
+end 
+
+[v2_apx, v2, i_l_apx, i_l] = buckConverter(signal, duty, len, sample_size, samp_freq, v1, cap, ind, res);
+
+sx = v2_apx;
+
+
+%% Channel
+% add AWGN + modeling error (?)
+p = sum(sx.^2)/(len*sample_size);
+snr = 10;            % dB
+snr_lim = 10^(snr/10);
+const = sqrt(p)/sqrt(snr_lim);
+noise = const*randn(1, len*sample_size);
+sx = sx + noise;
+
+%% Receiver
+% Predict with MLSE
+
+rx = sx;
+err = zeros(1, 2^len - 1);
+
+if flag_
+lengthx = len;
+
 for x = 0:2^lengthx - 1
 %     input_raw = round(rand(1, len));
-    input_raw = (int2bit(x,lengthx))';
-%     input_raw = ref_signal;
+    input_raw_rx = (int2bit(x,lengthx))';
 
     % for line encoding
     if flag_lc == 1
         temp = [];
-        for i = 1:length(input_raw)
-            if input_raw(i) == 0
+        for i = 1:length(input_raw_rx)
+            if input_raw_rx(i) == 0
                 temp = [temp 0 1];
             else
                 temp = [temp 1 0];
             end
         end
-        input_raw = temp;
-        len = length(input_raw);
+        input_raw_rx = temp;
+        len = length(input_raw_rx);
     end
     
     signal = [];
@@ -62,51 +129,45 @@ for x = 0:2^lengthx - 1
         % For unmodulated
         for i = 1:len
             for j = 1:sample_size
-                signal = [signal input_raw(i)];
+                signal = [signal input_raw_rx(i)];
             end
         end
 
     elseif flag_mod == 1
         % For PWM
         for i = 1:len
-            signal = [signal generatePWM(duty, sample_size, input_raw(i), var)];
+            signal = [signal generatePWM(duty, sample_size, input_raw_rx(i), var)];
         end
 
     elseif flag_mod == 2
         % For PSK
         for i = 1:len
-            signal = [signal generatePSK(duty, sample_size,input_raw(i))];
+            signal = [signal generatePSK(duty, sample_size,input_raw_rx(i))];
         end
 
     elseif flag_mod == 3
         % For FSK
         for i = 1:len
-            signal = [signal generateFSK(duty, sample_size, input_raw(i))];
+            signal = [signal generateFSK(duty, sample_size, input_raw_rx(i))];
         end
     end 
 
     [v2_apx, v2, i_l_apx, i_l] = buckConverter(signal, duty, len, sample_size, samp_freq, v1, cap, ind, res);
     
-    figure(f);
-    subplot(2,1,1);
-    plot(v2_apx);
-    title("w/ appx");
-    hold on
-
-    subplot(2,1,2);
-    plot(v2)
-    title("w/o appx")
-    hold on
-    pause(.1)
+    % Calculate error
+    err(x+1) = sum((rx - v2_apx).^2);
 end
 
-%% Channel
-% add AWGN + modeling error (?)
-                   
+[m, index] = min(err);
+recv_seq = int2bit(index-1, len)';
 
-%% Receiver
-% Predict with MLSE
-
+figure();
+subplot(2,1,1)
+stem(recv_seq)
+title('predicted')
+subplot(2,1,2)
+stem(input_raw)
+title('sent')
 
 %% Modulation Functions
 function f = generateFSK(dutycycle, sfreq, bin)
@@ -166,7 +227,7 @@ function f = generatePWM(dutycycle, sfreq, bin, var)
     f = sig;
 end
 
-%% Buck Converter
+%% Buck Converter Model
 function [x, y, i, j] = buckConverter(signal, duty, len, sample_size, samp_freq, v1, cap, ind, res)
     % Output for approximation
     i_l_apx = zeros(1, len*sample_size);
