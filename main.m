@@ -12,11 +12,15 @@ flag_mod = 2;           % Flag for modulation scheme
                         % 2: PSK
                         % 3: FSK
 
-flag_lc = 1;            % Flag for line encoding
+flag_lc = 0;            % Flag for line encoding
                         % 0: No line coding
                         % 1: Manchester coding
 
-no_messages = 10;     % # messages per SNR value                    
+no_messages = 500;     % # messages per SNR value
+
+step_snr = 1;
+min_snr = 1;
+max_snr = 1;
 
 v1 = 10;        % Volt
 duty = 0.75;    
@@ -30,20 +34,29 @@ ind = 1e-5;     % H
 cap = 1e-6;     % F
 res = 10;       % Ohm
 
+ber = [];
+
 %% For loops
-for i = 0:0.2:20        % SNR values in dB
+count = 1;
+for i = min_snr:step_snr:max_snr        % SNR values in dB
     for k = 1:no_messages
-%% Sender
-[v2_apx, v2, i_l_apx, i_l] = sender(len, flag_lc, sample_size, flag_mod, duty, var, v1, cap, ind, res, samp_freq);
-sx = v2_apx;
-
-%% Channel
-rx = channel(sx);
-
-%% Receiver
-
-
-%% Metric calculations
-
+        %% Sender
+        [v2_apx, ~, ~, ~, send_seq] = sender(len, flag_lc, sample_size, flag_mod, duty, var, v1, cap, ind, res, samp_freq);
+        sx = v2_apx;
+        
+        %% Channel
+        rx = channel(sx);
+        
+        %% Receiver
+        recv_seq = receiver(rx, len, flag_lc, sample_size, flag_mod, duty, var, v1, cap, ind, res, samp_freq);
+        
+        %% Metric calculations
+        ber(k, count) = biterr(send_seq, recv_seq, [], 'row-wise');
+        if flag_lc == 1
+            
+        end
     end
+    count = count + 1;
 end
+
+biterror = sum(ber)/(no_messages*len)

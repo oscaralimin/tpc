@@ -1,4 +1,4 @@
-function [v2_apx, v2, i_l_apx, i_l] = sender(len, flag_lc, sample_size, flag_mod, duty, var, v1, cap, ind, res, samp_freq)
+function [v2_apx, v2, i_l_apx, i_l, seq] = sender(len, flag_lc, sample_size, flag_mod, duty, var, v1, cap, ind, res, samp_freq)
     input_raw = round(rand(1, len));
     
     if flag_lc == 1
@@ -45,6 +45,7 @@ function [v2_apx, v2, i_l_apx, i_l] = sender(len, flag_lc, sample_size, flag_mod
     end
 
     [v2_apx, v2, i_l_apx, i_l] = buckConverter(signal, duty, len, sample_size, samp_freq, v1, cap, ind, res);
+    seq = input_raw;
 end
 
 %% Modulation functions
