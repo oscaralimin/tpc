@@ -16,11 +16,14 @@ flag_lc = 0;            % Flag for line encoding
                         % 0: No line coding
                         % 1: Manchester coding
 
-no_messages = 500;     % # messages per SNR value
+no_messages = 1;      % # messages per SNR value
 
-step_snr = 1;
-min_snr = 1;
-max_snr = 1;
+step_snr = 2;           % step size for SNR
+min_snr = -30;          % min SNR value (dB)
+max_snr = -30;           % max SNR value (dB)
+
+downsamples = 0;
+ds_offset = 800;
 
 v1 = 10;        % Volt
 duty = 0.75;    
@@ -34,29 +37,47 @@ ind = 1e-5;     % H
 cap = 1e-6;     % F
 res = 10;       % Ohm
 
-ber = [];
+snr = min_snr:step_snr:max_snr;
+ber = zeros(1,length(snr));
+
 
 %% For loops
 count = 1;
 for i = min_snr:step_snr:max_snr        % SNR values in dB
+    
     for k = 1:no_messages
         %% Sender
         [v2_apx, ~, ~, ~, send_seq] = sender(len, flag_lc, sample_size, flag_mod, duty, var, v1, cap, ind, res, samp_freq);
         sx = v2_apx;
         
         %% Channel
-        rx = channel(sx);
+        [rx, sigma2] = channel(sx, duty*v1, i);
+%         sum(sx.^2)/length(sx)
+%         sum((sx-duty*v1).^2)/length(sx)
+%         sum(rx.^2)/length(sx)
+%         sigma2
+%         pause()
         
         %% Receiver
-        recv_seq = receiver(rx, len, flag_lc, sample_size, flag_mod, duty, var, v1, cap, ind, res, samp_freq);
+        recv_seq = receiver(rx, len, flag_lc, sample_size, flag_mod, duty, var, v1, cap, ind, res, samp_freq, downsamples, ds_offset);
         
         %% Metric calculations
-        ber(k, count) = biterr(send_seq, recv_seq, [], 'row-wise');
-        if flag_lc == 1
-            
-        end
+        ber(count) = ber(count) + biterr(send_seq, recv_seq);
+%         a = biterr(send_seq, recv_seq, [], 'row-wise');
+%         disp(send_seq)
+%         disp(recv_seq)
+%         disp(a);
+%         
+%         pause()
+        
     end
     count = count + 1;
 end
 
-biterror = sum(ber)/(no_messages*len)
+ber = ber/(no_messages*len);
+semilogy(min_snr:step_snr:max_snr,ber)
+grid on
+save workspace
+
+
+

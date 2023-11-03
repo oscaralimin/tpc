@@ -56,9 +56,9 @@ function seq = receiver(rx, len, flag_lc, sample_size, flag_mod, duty, var, v1, 
                 signal = [signal generateFSK(duty, sample_size, input_raw(i))];
             end
         end 
-        
+    
         [v2_apx, v2, i_l_apx, i_l] = buckConverter(signal, duty, len, sample_size, samp_freq, v1, cap, ind, res);
-        signal_hypo(x+1,:) = v2_apx;
+        signal_hypo(x,:) = v2_apx;
         % TODO
         % Downsampling
 %         plot(v2_apx,'r')
@@ -70,7 +70,7 @@ function seq = receiver(rx, len, flag_lc, sample_size, flag_mod, duty, var, v1, 
 %         pause()
     end
 
-%     save signal_hypotheses signal_hypo
+    save signal_hypotheses signal_hypo
 
     [~, index] = min(err);
     seq_temp = int2bit(index-1, lengthx)';
