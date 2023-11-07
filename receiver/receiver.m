@@ -4,8 +4,8 @@ function seq = receiver(rx, len, flag_lc, sample_size, flag_mod, duty, var, v1, 
     err = zeros(1, 2^lengthx);
     
     % Downsampling received signal
-%     rx_temp = downsample(rx, sample_size/s, offset);
-    rx_temp = rx;
+    rx_temp = downsample(rx, sample_size/s, offset);
+%     rx_temp = rx;
 %     figure()
 %     clf
 %     plot(rx)
@@ -62,12 +62,12 @@ function seq = receiver(rx, len, flag_lc, sample_size, flag_mod, duty, var, v1, 
         % TODO
         % Downsampling
 %         plot(v2_apx,'r')
-%         v2_apx = downsample(v2_apx, sample_size/s, offset);
+        v2_apx = downsample(v2_apx, sample_size/s, offset);
 %         plot([offset:sample_size/s:length(rx)],v2_apx,'rx')
+%         pause()
 
         % Calculate error
         err(x+1) = sum((rx_temp - v2_apx).^2);
-%         pause()
     end
 
 %     save signal_hypotheses signal_hypo

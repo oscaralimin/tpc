@@ -16,14 +16,14 @@ flag_lc = 0;            % Flag for line encoding
                         % 0: No line coding
                         % 1: Manchester coding
 
-no_messages = 1;      % # messages per SNR value
+no_messages = 10000;      % # messages per SNR value
 
 step_snr = 2;           % step size for SNR
-min_snr = -30;          % min SNR value (dB)
-max_snr = -30;           % max SNR value (dB)
+min_snr = 0;          % min SNR value (dB)
+max_snr = 20;           % max SNR value (dB)
 
-downsamples = 0;
-ds_offset = 800;
+downsamples = 4;
+ds_offset = 100;
 
 v1 = 10;        % Volt
 duty = 0.75;    
@@ -35,10 +35,12 @@ var = 0.2;      % PWM (duty1+duty2)/2 = duty       duty2 - duty1 = var
 
 ind = 1e-5;     % H
 cap = 1e-6;     % F
-res = 10;       % Ohm
+res = 15;       % Ohm
 
 snr = min_snr:step_snr:max_snr;
 ber = zeros(1,length(snr));
+
+
 
 
 %% For loops
@@ -75,6 +77,7 @@ for i = min_snr:step_snr:max_snr        % SNR values in dB
 end
 
 ber = ber/(no_messages*len);
+figure
 semilogy(min_snr:step_snr:max_snr,ber)
 grid on
 save workspace
