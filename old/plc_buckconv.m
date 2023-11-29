@@ -4,7 +4,7 @@ close all
 
 %% Parameters
 
-flag_mod = 1;           % Flag for modulation scheme
+flag_mod = 0;           % Flag for modulation scheme
                         % 0: Unmodulated
                         % 1: PWM
                         % 2: PSK
@@ -16,7 +16,7 @@ flag_lc = 0;            % Flag for line encoding
 
 v1 = 10;        % Volt
 duty = 0.75;    
-len = 8;
+len = 53;
 T = 1e-6;      
 sample_size = 1000;
 samp_freq = sample_size/T;      % Hz
@@ -33,6 +33,8 @@ for i = 1:len
     ref_signal(sample_size*i-(sample_size/2)-(duty*sample_size/2):sample_size*i-(sample_size/2)+(duty*sample_size/2)) = 1;
 end
 
+% plot(ref_signal)
+
 %% Sender
 
 f = figure("Name","V2 Output");
@@ -40,8 +42,8 @@ f = figure("Name","V2 Output");
 lengthx = len;
 for x = 0:2^lengthx - 1
 %     input_raw = round(rand(1, len));
-    input_raw = (int2bit(x,lengthx))';
-%     input_raw = ref_signal;
+%     input_raw = (int2bit(x,lengthx))';
+    input_raw = ref_signal;
 
     % for line encoding
     if flag_lc == 1
@@ -60,11 +62,7 @@ for x = 0:2^lengthx - 1
     signal = [];
     if flag_mod == 0
         % For unmodulated
-        for i = 1:len
-            for j = 1:sample_size
-                signal = [signal input_raw(i)];
-            end
-        end
+        signal = ref_signal;
 
     elseif flag_mod == 1
         % For PWM
@@ -85,19 +83,23 @@ for x = 0:2^lengthx - 1
         end
     end 
 
+    plot(signal)
+
     [v2_apx, v2, i_l_apx, i_l] = buckConverter(signal, duty, len, sample_size, samp_freq, v1, cap, ind, res);
     
     figure(f);
-    subplot(2,1,1);
+%     subplot(2,1,1);
     plot(v2_apx);
     title("w/ appx");
+    grid on
     hold on
+    pause()
 
-    subplot(2,1,2);
-    plot(v2)
-    title("w/o appx")
-    hold on
-    pause(.1)
+%     subplot(2,1,2);
+%     plot(v2)
+%     title("w/o appx")
+%     hold on
+%     pause(.1)
 end
 
 %% Channel

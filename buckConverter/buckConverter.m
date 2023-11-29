@@ -1,3 +1,8 @@
+% Matlab function to simulate buck converter with given input parameters.
+% Outputs a matrix of possible output voltages 
+%
+
+
 function [v2_apx_mat, v2_mat, i_l_apx_mat, i_l_mat] = buckConverter(flag_mod, flag_lc, duty, len, sample_size, samp_freq, v1, cap, ind, res, var)
     % Matrix with all possible combinations
     if flag_lc == 0

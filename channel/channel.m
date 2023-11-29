@@ -1,6 +1,8 @@
-function [rx, sigma2] = channel(sx, dc, snr)
+% Matlab function to simulate AWGN channel.
+% Outputs the signal with added noise.
+
+function [rx, sigma2] = channel(sx, snr, p)
     % add AWGN + modeling error (?)
-    p = sum((sx-dc).^2)/(length(sx));
     snr_lim = 10^(snr/10);
     const = sqrt(p)/sqrt(snr_lim);
     noise = const*randn(1, length(sx));
